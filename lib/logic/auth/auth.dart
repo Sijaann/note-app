@@ -87,7 +87,7 @@ class Auth {
 
           showSnackBar(
             context: context,
-            text: "SignUp Successful",
+            text: "Login Successful",
             textColor: AppColors.textColor,
             backgroundColor: Colors.green,
           );

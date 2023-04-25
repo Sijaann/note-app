@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:notes_app/redirect.dart';
 import 'package:notes_app/screens/login.dart';
 
 import '../utils/app_text.dart';
@@ -26,7 +27,7 @@ class _SplashState extends State<Splash> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const Login(),
+          builder: (context) => const RedirectPage(),
         ),
       );
     });
