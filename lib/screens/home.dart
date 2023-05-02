@@ -2,8 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:notes_app/logic/auth/auth.dart';
+import 'package:notes_app/screens/groupDocuments/groupHome.dart';
 import 'package:notes_app/screens/login.dart';
 import 'package:notes_app/screens/personalDocument/personal_documents.dart';
+import 'package:notes_app/screens/starred/starred.dart';
 import 'package:notes_app/utils/app_button.dart';
 import 'package:notes_app/utils/app_text.dart';
 import 'package:notes_app/utils/colors.dart';
@@ -54,6 +56,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    signedIn;
     return (signedIn == true)
         ? Scaffold(
             appBar: AppBar(
@@ -110,9 +113,9 @@ class _HomeState extends State<Home> {
                           ),
                           accountEmail: AppText(
                             text: email,
-                            size: 16,
+                            size: 13,
                             color: AppColors.textColor,
-                            weight: FontWeight.w500,
+                            weight: FontWeight.bold,
                             overflow: TextOverflow.ellipsis,
                           ),
                           currentAccountPicture: CircleAvatar(
@@ -212,12 +215,22 @@ class _HomeState extends State<Home> {
                           onTap: () {
                             auth.logout(context: context);
                           },
-                          color: AppColors.primaryColor,
+                          color: Colors.red,
                           height: 40,
                           radius: 10,
-                          child: const AppText(
-                            text: "LogOut",
-                            color: AppColors.textColor,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.logout),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: AppText(
+                                  text: "LogOut",
+                                  weight: FontWeight.bold,
+                                  color: AppColors.textColor,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -274,14 +287,12 @@ class _HomeState extends State<Home> {
                         ),
                         dense: true,
                         onTap: () {
-                          if (signedIn == false) {
-                            showSnackBar(
-                              context: context,
-                              text: "Please Login to view stared documents",
-                              textColor: AppColors.textColor,
-                              backgroundColor: Colors.amber,
-                            );
-                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const StarredNotes(),
+                            ),
+                          );
                         },
                         leading: const Icon(
                           Icons.star_rounded,
@@ -306,14 +317,12 @@ class _HomeState extends State<Home> {
                         ),
                         dense: true,
                         onTap: () {
-                          if (signedIn == false) {
-                            showSnackBar(
-                              context: context,
-                              text: "Please Login to view group documents",
-                              textColor: AppColors.textColor,
-                              backgroundColor: Colors.amber,
-                            );
-                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const GroupHome(),
+                            ),
+                          );
                         },
                         leading: const Icon(
                           Icons.group,
@@ -408,14 +417,12 @@ class _HomeState extends State<Home> {
                         ),
                         dense: true,
                         onTap: () {
-                          if (signedIn == false) {
-                            showSnackBar(
-                              context: context,
-                              text: "Please Login to view stared documents",
-                              textColor: AppColors.textColor,
-                              backgroundColor: Colors.amber,
-                            );
-                          }
+                          showSnackBar(
+                            context: context,
+                            text: "Please Login to view stared documents",
+                            textColor: AppColors.textColor,
+                            backgroundColor: Colors.amber,
+                          );
                         },
                         leading: const Icon(
                           Icons.star_rounded,
@@ -440,14 +447,12 @@ class _HomeState extends State<Home> {
                         ),
                         dense: true,
                         onTap: () {
-                          if (signedIn == false) {
-                            showSnackBar(
-                              context: context,
-                              text: "Please Login to view group documents",
-                              textColor: AppColors.textColor,
-                              backgroundColor: Colors.amber,
-                            );
-                          }
+                          showSnackBar(
+                            context: context,
+                            text: "Please Login to view group documents",
+                            textColor: AppColors.textColor,
+                            backgroundColor: Colors.amber,
+                          );
                         },
                         leading: const Icon(
                           Icons.group,

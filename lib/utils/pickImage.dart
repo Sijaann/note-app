@@ -24,3 +24,25 @@ Future<List<File>?> pickImage() async {
     debugPrint(e.toString());
   }
 }
+
+Future<List<File>?> pickMultiImage() async {
+  List<File> images = [];
+
+  try {
+    var files = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+      allowCompression: true,
+    );
+
+    if (files != null && files.files.isNotEmpty) {
+      for (int i = 0; i < files.files.length; i++) {
+        images.add(File(files.files[i].path!));
+      }
+    }
+
+    return images;
+  } catch (e) {
+    debugPrint(e.toString());
+  }
+}

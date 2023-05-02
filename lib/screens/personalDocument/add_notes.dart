@@ -70,7 +70,7 @@ class _AddNotesState extends State<AddNotes> {
       for (Uint8List imgByte in imageBytes) {
         base64Strings.add(base64Encode(imgByte));
       }
-      // debugPrint(base64Strings[0]);
+      debugPrint(base64Strings[0]);
     } catch (e) {
       print(e.toString());
     }
@@ -91,12 +91,24 @@ class _AddNotesState extends State<AddNotes> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
         onPressed: () async {
-          await DatabaseHelper.dbHelper.insertRecord({
-            DatabaseHelper.notesTitle: titleController.text,
-            DatabaseHelper.notesBody: bodyController.text,
-            DatabaseHelper.notesDueDate: dateInput.text,
-            DatabaseHelper.notesDueTime: timeInput.text,
-          });
+          if (base64Strings.isEmpty) {
+            await DatabaseHelper.dbHelper.insertRecord({
+              DatabaseHelper.notesTitle: titleController.text,
+              DatabaseHelper.notesBody: bodyController.text,
+              DatabaseHelper.notesDueDate: dateInput.text,
+              DatabaseHelper.notesDueTime: timeInput.text,
+              DatabaseHelper.isImportant: 0,
+            });
+          } else {
+            await DatabaseHelper.dbHelper.insertRecord({
+              DatabaseHelper.notesTitle: titleController.text,
+              DatabaseHelper.notesBody: bodyController.text,
+              DatabaseHelper.notesDueDate: dateInput.text,
+              DatabaseHelper.notesDueTime: timeInput.text,
+              DatabaseHelper.imageAttachment: base64Strings[0],
+              DatabaseHelper.isImportant: 0,
+            });
+          }
           Navigator.pop(context);
           showSnackBar(
             context: context,
@@ -323,10 +335,40 @@ class _AddNotesState extends State<AddNotes> {
                       itemCount: images.length,
                       itemBuilder: (context, index) {
                         return Card(
-                          child: Image.file(
-                            images[index],
-                            // height: 250,
-                            // width: double.infinity,
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Image.file(
+                                  images[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Align(
+                                  alignment: Alignment.topRight,
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        images.removeAt(0);
+                                      });
+                                    },
+                                    child: CircleAvatar(
+                                      backgroundColor: AppColors.hintTextColor
+                                          .withOpacity(0.8)
+                                          .withOpacity(0.5),
+                                      radius: 10,
+                                      child: const AppText(
+                                        text: "X",
+                                        size: 15,
+                                        weight: FontWeight.bold,
+                                        color: AppColors.textColor,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            ],
                           ),
                         );
                       },

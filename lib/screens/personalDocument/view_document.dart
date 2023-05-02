@@ -1,9 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notes_app/data/db_helper.dart';
 import 'package:notes_app/utils/app_text.dart';
 import 'package:notes_app/utils/app_textfield.dart';
 import 'package:notes_app/utils/colors.dart';
+import 'package:notes_app/utils/pickImage.dart';
 import 'package:notes_app/utils/snachbar.dart';
 
 class ViewDocument extends StatefulWidget {
@@ -12,6 +17,8 @@ class ViewDocument extends StatefulWidget {
   final String body;
   final String dueDate;
   final String dueTime;
+  final String? image;
+  final int important;
   const ViewDocument({
     super.key,
     required this.id,
@@ -19,6 +26,8 @@ class ViewDocument extends StatefulWidget {
     required this.body,
     required this.dueDate,
     required this.dueTime,
+    required this.image,
+    required this.important,
   });
 
   @override
@@ -30,12 +39,63 @@ class _ViewDocumentState extends State<ViewDocument> {
   TextEditingController timeInput = TextEditingController();
   TextEditingController titleController = TextEditingController();
   TextEditingController bodyController = TextEditingController();
+  bool removeImage = false;
 
   getData() {
     dateInput.text = widget.dueDate;
     timeInput.text = widget.dueTime;
     titleController.text = widget.title;
     bodyController.text = widget.body;
+  }
+
+  List<File> images = [];
+
+  void selectImage() async {
+    var res = await pickImage();
+    setState(() {
+      images = res!;
+    });
+
+    // print(images);
+    openImage();
+  }
+
+  List<String> imagePaths = [];
+  List<File> imageFiles = [];
+  List<Uint8List> imageBytes = [];
+  List<String> base64Strings = [];
+
+  openImage() async {
+    try {
+      for (int i = 0; i < images.length; i++) {
+        imagePaths.add(images[i].toString().substring(6));
+        // print(i);
+      }
+      // print(imagePaths);
+
+      for (String path in imagePaths) {
+        int pathLength = path.length;
+        imageFiles.add(
+          File(
+            path.substring(2, pathLength - 1),
+          ),
+        );
+        // print(imageFiles);
+      }
+
+      for (File file in imageFiles) {
+        // Uint8List imgByte = await file.readAsBytes();
+        imageBytes.add(await file.readAsBytes());
+      }
+      // print(imageBytes);
+
+      for (Uint8List imgByte in imageBytes) {
+        base64Strings.add(base64Encode(imgByte));
+      }
+      // debugPrint(base64Strings[0]);
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   @override
@@ -50,13 +110,53 @@ class _ViewDocumentState extends State<ViewDocument> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
         onPressed: () async {
-          await DatabaseHelper.dbHelper.updateRecord({
-            DatabaseHelper.notesId: widget.id,
-            DatabaseHelper.notesDueDate: dateInput.text,
-            DatabaseHelper.notesDueTime: timeInput.text,
-            DatabaseHelper.notesTitle: titleController.text,
-            DatabaseHelper.notesBody: bodyController.text,
-          });
+          if (widget.image != null) {
+            if (removeImage == false) {
+              if (images.isNotEmpty) {
+                await DatabaseHelper.dbHelper.updateRecord({
+                  DatabaseHelper.notesId: widget.id,
+                  DatabaseHelper.notesDueDate: dateInput.text,
+                  DatabaseHelper.notesDueTime: timeInput.text,
+                  DatabaseHelper.notesTitle: titleController.text,
+                  DatabaseHelper.notesBody: bodyController.text,
+                  DatabaseHelper.imageAttachment: base64Strings[0],
+                  DatabaseHelper.isImportant: widget.important,
+                });
+              }
+            } else {
+              await DatabaseHelper.dbHelper.updateRecord({
+                DatabaseHelper.notesId: widget.id,
+                DatabaseHelper.notesDueDate: dateInput.text,
+                DatabaseHelper.notesDueTime: timeInput.text,
+                DatabaseHelper.notesTitle: titleController.text,
+                DatabaseHelper.notesBody: bodyController.text,
+                DatabaseHelper.imageAttachment: null,
+                DatabaseHelper.isImportant: widget.important,
+              });
+            }
+          }
+          if (widget.image == null) {
+            if (images.isNotEmpty) {
+              await DatabaseHelper.dbHelper.updateRecord({
+                DatabaseHelper.notesId: widget.id,
+                DatabaseHelper.notesDueDate: dateInput.text,
+                DatabaseHelper.notesDueTime: timeInput.text,
+                DatabaseHelper.notesTitle: titleController.text,
+                DatabaseHelper.notesBody: bodyController.text,
+                DatabaseHelper.imageAttachment: base64Strings[0],
+                DatabaseHelper.isImportant: widget.important,
+              });
+            } else {
+              await DatabaseHelper.dbHelper.updateRecord({
+                DatabaseHelper.notesId: widget.id,
+                DatabaseHelper.notesDueDate: dateInput.text,
+                DatabaseHelper.notesDueTime: timeInput.text,
+                DatabaseHelper.notesTitle: titleController.text,
+                DatabaseHelper.notesBody: bodyController.text,
+                DatabaseHelper.isImportant: widget.important,
+              });
+            }
+          }
           Navigator.pop(context);
           showSnackBar(
             context: context,
@@ -98,7 +198,7 @@ class _ViewDocumentState extends State<ViewDocument> {
                 context: context,
                 builder: (BuildContext context) {
                   return Container(
-                    height: 70,
+                    height: 125,
                     decoration: const BoxDecoration(
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(10),
@@ -115,11 +215,11 @@ class _ViewDocumentState extends State<ViewDocument> {
                                   BorderRadiusDirectional.circular(10),
                             ),
                             onTap: () async {
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+
                               await DatabaseHelper.dbHelper
                                   .deleteRecord(widget.id);
-
-                              Navigator.pop(context);
-                              Navigator.pop(context);
 
                               showSnackBar(
                                 context: context,
@@ -135,9 +235,29 @@ class _ViewDocumentState extends State<ViewDocument> {
                             ),
                             title: const AppText(
                               text: "Delete",
+                              weight: FontWeight.w500,
                               color: AppColors.textColor,
                             ),
                           ),
+                          ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadiusDirectional.circular(10),
+                            ),
+                            onTap: () {
+                              selectImage();
+                              Navigator.pop(context);
+                            },
+                            leading: const Icon(
+                              Icons.add_photo_alternate_rounded,
+                              color: Colors.green,
+                            ),
+                            title: const AppText(
+                              text: "Add Image",
+                              weight: FontWeight.w500,
+                              color: AppColors.textColor,
+                            ),
+                          )
                         ],
                       ),
                     ),
@@ -260,7 +380,182 @@ class _ViewDocumentState extends State<ViewDocument> {
                         weight: FontWeight.bold,
                         size: 23,
                       ),
-                    )
+                    ),
+                    (widget.image != null)
+                        ? (removeImage == false)
+                            ? (images.isEmpty)
+                                ? Card(
+                                    child: Stack(
+                                      children: [
+                                        Center(
+                                          child: Image.memory(
+                                            base64Decode(widget.image!),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Align(
+                                            alignment: Alignment.topRight,
+                                            child: InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  removeImage = true;
+                                                });
+                                              },
+                                              child: CircleAvatar(
+                                                backgroundColor: AppColors
+                                                    .hintTextColor
+                                                    .withOpacity(0.8),
+                                                radius: 10,
+                                                child: const AppText(
+                                                  text: "X",
+                                                  size: 15,
+                                                  weight: FontWeight.bold,
+                                                  color: AppColors.textColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    itemCount: images.length,
+                                    itemBuilder: (context, index) {
+                                      return Card(
+                                        child: Stack(
+                                          children: [
+                                            Image.file(
+                                              images[index],
+                                              // height: 250,
+                                              // width: double.infinity,
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Align(
+                                                alignment: Alignment.topRight,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      images.removeAt(0);
+                                                    });
+                                                  },
+                                                  child: CircleAvatar(
+                                                    backgroundColor: AppColors
+                                                        .hintTextColor
+                                                        .withOpacity(0.8)
+                                                        .withOpacity(0.5),
+                                                    radius: 10,
+                                                    child: const AppText(
+                                                      text: "X",
+                                                      size: 15,
+                                                      weight: FontWeight.bold,
+                                                      color:
+                                                          AppColors.textColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )
+                            : ListView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount: images.length,
+                                itemBuilder: (context, index) {
+                                  return Card(
+                                    child: Stack(
+                                      children: [
+                                        Image.file(
+                                          images[index],
+                                          // height: 250,
+                                          // width: double.infinity,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Align(
+                                            alignment: Alignment.topRight,
+                                            child: InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  images.removeAt(0);
+                                                });
+                                              },
+                                              child: CircleAvatar(
+                                                backgroundColor: AppColors
+                                                    .hintTextColor
+                                                    .withOpacity(0.8)
+                                                    .withOpacity(0.5),
+                                                radius: 10,
+                                                child: const AppText(
+                                                  text: "X",
+                                                  size: 15,
+                                                  weight: FontWeight.bold,
+                                                  color: AppColors.textColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  );
+                                },
+                              )
+                        : ListView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: images.length,
+                            itemBuilder: (context, index) {
+                              return Card(
+                                child: Stack(
+                                  children: [
+                                    Image.file(
+                                      images[index],
+                                      // height: 250,
+                                      // width: double.infinity,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Align(
+                                        alignment: Alignment.topRight,
+                                        child: InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              images.removeAt(0);
+                                            });
+                                          },
+                                          child: CircleAvatar(
+                                            backgroundColor: AppColors
+                                                .hintTextColor
+                                                .withOpacity(0.8)
+                                                .withOpacity(0.5),
+                                            radius: 10,
+                                            child: const AppText(
+                                              text: "X",
+                                              size: 15,
+                                              weight: FontWeight.bold,
+                                              color: AppColors.textColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              );
+                            },
+                          )
                   ],
                 ),
               ),
@@ -274,7 +569,7 @@ class _ViewDocumentState extends State<ViewDocument> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () => selectImage(),
                     icon: const Icon(
                       Icons.add_photo_alternate_rounded,
                     ),

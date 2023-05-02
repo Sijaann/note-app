@@ -13,6 +13,8 @@ class DatabaseHelper {
   static const notesBody = "body";
   static const notesDueDate = "dueDate";
   static const notesDueTime = "dueTime";
+  static const imageAttachment = "image";
+  static const isImportant = "important";
 
   // Constructor
   static final DatabaseHelper dbHelper = DatabaseHelper();
@@ -45,7 +47,9 @@ CREATE TABLE $dbTable(
   $notesTitle TEXT,
   $notesBody TEXT NOT NULL,
   $notesDueDate TEXT,
-  $notesDueTime TEXT 
+  $notesDueTime TEXT,
+  $imageAttachment TEXT NULL,
+  $isImportant INTEGER NOT NULL
 )
 ''');
   }

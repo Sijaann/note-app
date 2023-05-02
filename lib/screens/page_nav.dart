@@ -12,8 +12,8 @@ class NavPage extends StatefulWidget {
 
 class _NavPageState extends State<NavPage> {
   final List _pages = [
-    const Home(),
-    const Profile(),
+    Home(),
+    Profile(),
   ];
 
   int currentIndex = 0;

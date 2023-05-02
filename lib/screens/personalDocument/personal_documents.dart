@@ -16,6 +16,8 @@ class PersonalDocuments extends StatefulWidget {
 class _PersonalDocumentsState extends State<PersonalDocuments> {
   List<Map<String, dynamic>> data = [];
 
+  bool isImportant = false;
+
   getData() async {
     dynamic val = await DatabaseHelper.dbHelper.readRecord();
     setState(() {
@@ -101,19 +103,8 @@ class _PersonalDocumentsState extends State<PersonalDocuments> {
                                           10,
                                         ),
                                       ),
-                                      onLongPress: () async {
-                                        await DatabaseHelper.dbHelper
-                                            .deleteRecord(data[index]['id']);
-
+                                      onTap: () {
                                         Navigator.pop(context);
-                                        Navigator.pop(context);
-
-                                        showSnackBar(
-                                          context: context,
-                                          text: "Note Deleted!",
-                                          textColor: AppColors.textColor,
-                                          backgroundColor: Colors.red,
-                                        );
                                       },
                                       dense: true,
                                       leading: const Icon(
@@ -133,7 +124,7 @@ class _PersonalDocumentsState extends State<PersonalDocuments> {
                         );
                       },
                       onTap: () {
-                        print(data);
+                        // print(data);
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => ViewDocument(
@@ -142,6 +133,8 @@ class _PersonalDocumentsState extends State<PersonalDocuments> {
                               body: data[index]["body"],
                               dueDate: data[index]["dueDate"],
                               dueTime: data[index]["dueTime"],
+                              image: data[index]["image"],
+                              important: data[index]["important"],
                             ),
                           ),
                         );
@@ -152,10 +145,6 @@ class _PersonalDocumentsState extends State<PersonalDocuments> {
                         size: 16,
                         maxLines: 1,
                       ),
-
-                      // subtitle: (data[index]["body"].length) < 40
-                      //     ? Text(data[index]['body'])
-                      //     : Text('${data[index]["body"]}'.substring(0, 40)),
                       subtitle: AppText(
                         text:
                             "${data[index]['dueDate']} | ${data[index]['dueTime']}",
@@ -164,13 +153,50 @@ class _PersonalDocumentsState extends State<PersonalDocuments> {
                       ),
                       trailing: IconButton(
                         onPressed: () async {
-                          await DatabaseHelper.dbHelper
-                              .deleteRecord(data[index]['id']);
+                          if (data[index]['important'] == 0) {
+                            await DatabaseHelper.dbHelper.updateRecord({
+                              DatabaseHelper.notesId: data[index]['id'],
+                              DatabaseHelper.notesDueDate: data[index]
+                                  ['dueDate'],
+                              DatabaseHelper.notesDueTime: data[index]
+                                  ['dueTime'],
+                              DatabaseHelper.notesTitle: data[index]['title'],
+                              DatabaseHelper.notesBody: data[index]['body'],
+                              DatabaseHelper.imageAttachment: data[index]
+                                  ['image'],
+                              DatabaseHelper.isImportant: 1,
+                            });
+                            showSnackBar(
+                              context: context,
+                              text: "Note marked as important",
+                              textColor: AppColors.textColor,
+                              backgroundColor: AppColors.primaryColor,
+                            );
+                          } else {
+                            await DatabaseHelper.dbHelper.updateRecord({
+                              DatabaseHelper.notesId: data[index]['id'],
+                              DatabaseHelper.notesDueDate: data[index]
+                                  ['dueDate'],
+                              DatabaseHelper.notesDueTime: data[index]
+                                  ['dueTime'],
+                              DatabaseHelper.notesTitle: data[index]['title'],
+                              DatabaseHelper.notesBody: data[index]['body'],
+                              DatabaseHelper.imageAttachment: data[index]
+                                  ['image'],
+                              DatabaseHelper.isImportant: 0,
+                            });
+                          }
+                          setState(() {});
                         },
-                        icon: const Icon(
-                          Icons.delete,
-                          color: Colors.red,
-                        ),
+                        icon: (data[index]['important'] == 1)
+                            ? const Icon(
+                                Icons.star_rounded,
+                                color: Colors.amber,
+                              )
+                            : const Icon(
+                                Icons.star_outline_rounded,
+                                color: AppColors.hintTextColor,
+                              ),
                       ),
                     ),
                   )

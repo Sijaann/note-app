@@ -56,9 +56,9 @@ class _ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
-    return (signedIn == true)
-        ? Scaffold(
-            floatingActionButton: FloatingActionButton(
+    return Scaffold(
+      floatingActionButton: (signedIn == true)
+          ? FloatingActionButton(
               backgroundColor: AppColors.primaryColor,
               onPressed: () {
                 auth.logout(context: context);
@@ -67,16 +67,32 @@ class _ProfileState extends State<Profile> {
                 Icons.logout,
                 color: AppColors.textColor,
               ),
-            ),
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: const AppText(
-                text: "Profile",
+            )
+          : FloatingActionButton(
+              backgroundColor: AppColors.primaryColor,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Login(),
+                  ),
+                );
+              },
+              child: const Icon(
+                Icons.login,
                 color: AppColors.textColor,
-                weight: FontWeight.w500,
               ),
             ),
-            body: SingleChildScrollView(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const AppText(
+          text: "Profile",
+          color: AppColors.textColor,
+          weight: FontWeight.w500,
+        ),
+      ),
+      body: (signedIn == true)
+          ? SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Column(
@@ -175,49 +191,56 @@ class _ProfileState extends State<Profile> {
                   ],
                 ),
               ),
-            ),
-          )
-        : Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: const AppText(
-                text: "Profile",
-                color: AppColors.textColor,
+            )
+          : const Center(
+              child: AppText(
+                text: "Login to View Profile",
+                color: AppColors.primaryColor,
                 weight: FontWeight.w500,
               ),
             ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const AppText(
-                    text: "Login to View Profile",
-                    color: AppColors.primaryColor,
-                    weight: FontWeight.w500,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: AppButton(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Login(),
-                          ),
-                        );
-                      },
-                      color: AppColors.primaryColor,
-                      height: 40,
-                      radius: 10,
-                      child: const AppText(
-                        text: "Login",
-                        color: AppColors.textColor,
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          );
+    );
+    // : Scaffold(
+    //     appBar: AppBar(
+    //       automaticallyImplyLeading: false,
+    //       title: const AppText(
+    //         text: "Profile",
+    //         color: AppColors.textColor,
+    //         weight: FontWeight.w500,
+    //       ),
+    //     ),
+    //     body: Center(
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.center,
+    //         children: [
+    //           const AppText(
+    //             text: "Login to View Profile",
+    //             color: AppColors.primaryColor,
+    //             weight: FontWeight.w500,
+    //           ),
+    //           Padding(
+    //             padding: const EdgeInsets.symmetric(vertical: 20),
+    //             child: AppButton(
+    //               onTap: () {
+    //                 Navigator.push(
+    //                   context,
+    //                   MaterialPageRoute(
+    //                     builder: (context) => const Login(),
+    //                   ),
+    //                 );
+    //               },
+    //               color: AppColors.primaryColor,
+    //               height: 40,
+    //               radius: 10,
+    //               child: const AppText(
+    //                 text: "Login",
+    //                 color: AppColors.textColor,
+    //               ),
+    //             ),
+    //           )
+    //         ],
+    //       ),
+    //     ),
+    //   );
   }
 }
