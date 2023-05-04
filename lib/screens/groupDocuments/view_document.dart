@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notes_app/utils/app_text.dart';
@@ -38,11 +39,14 @@ class ViewDocument extends StatefulWidget {
 }
 
 class _ViewDocumentState extends State<ViewDocument> {
+  final User? user = FirebaseAuth.instance.currentUser;
   final TextEditingController dateInput = TextEditingController();
   final TextEditingController timeInput = TextEditingController();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController bodyController = TextEditingController();
   final TextEditingController taskController = TextEditingController();
+  final TextEditingController collaboratorEmailController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
   List collaborators = [];
 
@@ -129,16 +133,16 @@ class _ViewDocumentState extends State<ViewDocument> {
         FirebaseFirestore.instance.collection("notes").doc(noteId).update({
           'tasks': FieldValue.arrayUnion(tasks),
         }).then((value) {
-          print(tasks);
+          // print(tasks);
+          // print(tasks);
+          Navigator.pop(context);
+          showSnackBar(
+            context: context,
+            text: "Document Updated",
+            textColor: AppColors.textColor,
+            backgroundColor: Colors.green,
+          );
         });
-        // print(tasks);
-        Navigator.pop(context);
-        showSnackBar(
-          context: context,
-          text: "Document Updated",
-          textColor: AppColors.textColor,
-          backgroundColor: Colors.green,
-        );
       });
     } on FirebaseException catch (error) {
       debugPrint(
@@ -147,12 +151,70 @@ class _ViewDocumentState extends State<ViewDocument> {
     }
   }
 
+  Future<void> addCollaborator({required String collaboratorEmail}) async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: collaboratorEmail)
+          .get();
+
+      if (querySnapshot.size > 0) {
+        DocumentSnapshot userDocument = querySnapshot.docs[0];
+        String collaboratorId = userDocument.id;
+
+        if (collaboratorId == user!.uid) {
+          Navigator.pop(context);
+          Navigator.pop(context);
+          showSnackBar(
+            context: context,
+            text: "Can not add yourself as collaborator!",
+            textColor: AppColors.textColor,
+            backgroundColor: Colors.red,
+          );
+        } else {
+          if (collaborators.contains(collaboratorId)) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              text: "The user is already a collaborator",
+              textColor: AppColors.textColor,
+              backgroundColor: Colors.amber,
+            );
+          } else {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              text: "User found. Save Document to add collaborator",
+              textColor: AppColors.textColor,
+              backgroundColor: AppColors.primaryColor,
+            );
+          }
+        }
+
+        print(collaboratorId);
+      } else {
+        Navigator.pop(context);
+        Navigator.pop(context);
+        showSnackBar(
+          context: context,
+          text: "No user found with email $collaboratorEmail",
+          textColor: AppColors.textColor,
+          backgroundColor: Colors.red,
+        );
+      }
+    } on FirebaseException catch (error) {
+      debugPrint(error.toString());
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     setData();
     // print(taskss);
-    print(attachments);
+    // print(attachments);
   }
 
   @override
@@ -213,8 +275,59 @@ class _ViewDocumentState extends State<ViewDocument> {
                                   BorderRadiusDirectional.circular(10),
                             ),
                             onTap: () {
-                              // selectImage();
-                              // Navigator.pop(context);
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  title: const AppText(
+                                    text: "Add Collaborator",
+                                    color: AppColors.textColor,
+                                  ),
+                                  content: Form(
+                                    key: _formKey,
+                                    child: TextFormField(
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return "Field cannot be empty";
+                                        }
+                                      },
+                                      controller: collaboratorEmailController,
+                                      decoration: const InputDecoration(
+                                        hintText: "Email",
+                                        labelText: "Email",
+                                      ),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const AppText(
+                                        text: "Cancel",
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        if (_formKey.currentState!.validate()) {
+                                          addCollaborator(
+                                            collaboratorEmail:
+                                                collaboratorEmailController
+                                                    .text,
+                                          );
+                                          collaboratorEmailController.clear();
+                                          print(collaborators);
+                                        }
+                                      },
+                                      child: const AppText(
+                                        text: "Add",
+                                        color: AppColors.primaryColor,
+                                        weight: FontWeight.w500,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              );
                             },
                             leading: const Icon(
                               Icons.person_add,
@@ -237,7 +350,7 @@ class _ViewDocumentState extends State<ViewDocument> {
                                 context: context,
                                 builder: (BuildContext context) => AlertDialog(
                                   title: const AppText(
-                                    text: "Add Text",
+                                    text: "Add Task",
                                     color: AppColors.textColor,
                                   ),
                                   content: Form(

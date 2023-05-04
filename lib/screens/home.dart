@@ -60,32 +60,14 @@ class _HomeState extends State<Home> {
     return (signedIn == true)
         ? Scaffold(
             appBar: AppBar(
-              automaticallyImplyLeading: false,
+              automaticallyImplyLeading: true,
               title: const AppText(
                 text: "Notes App",
                 weight: FontWeight.w500,
                 color: AppColors.textColor,
               ),
-              actions: [
-                Builder(
-                  builder: (BuildContext context) {
-                    return IconButton(
-                      icon: const Icon(
-                        Icons.notifications,
-                        color: AppColors.textColor,
-                        // size: 44, // Changing Drawer Icon Size
-                      ),
-                      onPressed: () {
-                        Scaffold.of(context).openEndDrawer();
-                      },
-                      tooltip: MaterialLocalizations.of(context)
-                          .openAppDrawerTooltip,
-                    );
-                  },
-                ),
-              ],
             ),
-            endDrawer: Drawer(
+            drawer: Drawer(
               elevation: 0,
               child: Stack(
                 children: [
@@ -129,77 +111,64 @@ class _HomeState extends State<Home> {
                             ),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            dense: true,
-                            title: AppText(
-                              text: "Notifications",
-                              color: AppColors.textColor,
-                              weight: FontWeight.bold,
-                            ),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PersonalDocuments(),
+                              ),
+                            );
+                          },
+                          leading: const Icon(
+                            Icons.person,
+                            color: Colors.green,
+                          ),
+                          title: const AppText(
+                            text: "Personal Documents",
+                            color: AppColors.textColor,
+                            size: 18,
+                            weight: FontWeight.w500,
                           ),
                         ),
                         ListTile(
-                          dense: true,
-                          title: const AppText(
-                            text: "Invite Garne ko Email",
-                            color: AppColors.textColor,
-                            size: 16,
-                            weight: FontWeight.w500,
-                          ),
-                          subtitle: Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                icon: const Icon(
-                                  Icons.check,
-                                  color: Colors.green,
-                                ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const StarredNotes(),
                               ),
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                              )
-                            ],
+                            );
+                          },
+                          leading: const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                          ),
+                          title: const AppText(
+                            text: "Starred Documents",
+                            color: AppColors.textColor,
+                            size: 18,
+                            weight: FontWeight.w500,
                           ),
                         ),
                         ListTile(
-                          dense: true,
-                          title: const AppText(
-                            text: "Invite Garne ko Email",
-                            color: AppColors.textColor,
-                            size: 16,
-                            weight: FontWeight.w500,
-                          ),
-                          subtitle: Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                icon: const Icon(
-                                  Icons.check,
-                                  color: Colors.green,
-                                ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const GroupHome(),
                               ),
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                              )
-                            ],
+                            );
+                          },
+                          leading: const Icon(
+                            Icons.group,
+                            color: AppColors.primaryColor,
+                          ),
+                          title: const AppText(
+                            text: "Group Documents",
+                            color: AppColors.textColor,
+                            size: 18,
+                            weight: FontWeight.w500,
                           ),
                         ),
                       ],

@@ -99,7 +99,8 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
         'body': body,
         'attachments': attachments,
         'tasks': task,
-        'collaborators': collaborators
+        'collaborators': collaborators,
+        'isImportant': false
       });
 
       String newDoumentId = newDocReference.id;
@@ -119,6 +120,12 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
         textColor: AppColors.textColor,
         backgroundColor: Colors.red,
       );
+    }
+  }
+
+  void addCollaborator() {
+    try {} on FirebaseAuthException catch (error) {
+      debugPrint(error.toString());
     }
   }
 
