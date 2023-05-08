@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:notes_app/screens/groupDocuments/group_add_notes.dart';
 import 'package:notes_app/screens/groupDocuments/view_document.dart';
 import 'package:notes_app/utils/app_text.dart';
@@ -16,6 +17,14 @@ class GroupHome extends StatefulWidget {
 
 class _GroupHomeState extends State<GroupHome> {
   final User? user = FirebaseAuth.instance.currentUser;
+  List<String> fliterType = [
+    "All",
+    "Weekly",
+    "Monthly",
+    "Yearly",
+  ];
+  String filterTypeValue = "All";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,7 +177,8 @@ class _GroupHomeState extends State<GroupHome> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: AppText(
-                      text: "${document['dueDate']} | ${document['dueTime']}",
+                      text:
+                          "${DateFormat('yyyy-MM-dd').format(document['dueDate'].toDate())} | ${document['dueTime']}",
                       color: AppColors.hintTextColor,
                       size: 15,
                     ),
@@ -199,20 +209,60 @@ class _GroupHomeState extends State<GroupHome> {
           return (notesTile.isEmpty)
               ? const Center(
                   child: AppText(
-                    text: "No Notes Available",
+                    text: "No Documents Available",
                     color: AppColors.primaryColor,
                     weight: FontWeight.w500,
                   ),
                 )
               : Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ListView.builder(
-                    itemCount: notesTile.length,
-                    itemBuilder: (context, index) {
-                      return notesTile[index];
-                    },
-                  ),
-                );
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const AppText(
+                            text: "Filter by dute date",
+                            color: AppColors.primaryColor,
+                            weight: FontWeight.bold,
+                            size: 18,
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: DropdownButton(
+                              borderRadius: BorderRadius.circular(10),
+                              isExpanded: true,
+                              value: filterTypeValue,
+                              icon: const Icon(Icons.keyboard_arrow_down),
+                              items: fliterType.map((String item) {
+                                return DropdownMenuItem(
+                                  value: item,
+                                  child: AppText(
+                                    text: item,
+                                    color: AppColors.textColor,
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  filterTypeValue = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: notesTile.length,
+                        itemBuilder: (context, index) {
+                          return notesTile[index];
+                        },
+                      ),
+                    ],
+                  ));
         },
       ),
     );

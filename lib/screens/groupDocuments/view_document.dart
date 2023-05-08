@@ -15,7 +15,7 @@ import 'package:notes_app/utils/snachbar.dart';
 
 class ViewDocument extends StatefulWidget {
   final String id;
-  final String dueDate;
+  final Timestamp dueDate;
   final String dueTime;
   final String title;
   final String body;
@@ -49,14 +49,16 @@ class _ViewDocumentState extends State<ViewDocument> {
       TextEditingController();
   final _formKey = GlobalKey<FormState>();
   List collaborators = [];
+  List addedCollaborators = [];
 
   List tasks = [];
   List<File> images = [];
 
   List attachments = [];
+  DateTime? dueDate = null;
 
   void setData() {
-    dateInput.text = widget.dueDate;
+    dateInput.text = DateFormat('yyyy-MM-dd').format(widget.dueDate.toDate());
     timeInput.text = widget.dueTime;
     titleController.text = widget.title;
     bodyController.text = widget.body;
@@ -121,29 +123,75 @@ class _ViewDocumentState extends State<ViewDocument> {
     required dynamic noteId,
   }) async {
     try {
-      return FirebaseFirestore.instance.collection('notes').doc(noteId).update({
-        'dueDate': dateInput.text,
-        'dueTime': timeInput.text,
-        'title': titleController.text,
-        'body': bodyController.text,
-        'attachments': attachments,
-        'tasks': [],
-        'collaborators': collaborators,
-      }).then((value) {
-        FirebaseFirestore.instance.collection("notes").doc(noteId).update({
-          'tasks': FieldValue.arrayUnion(tasks),
+      if (dueDate == null) {
+        FirebaseFirestore.instance.collection('notes').doc(noteId).update({
+          'dueDate': widget.dueDate,
+          'dueTime': timeInput.text,
+          'title': titleController.text,
+          'body': bodyController.text,
+          'attachments': attachments,
+          'tasks': [],
+          'collaborators': collaborators,
         }).then((value) {
-          // print(tasks);
-          // print(tasks);
-          Navigator.pop(context);
+          FirebaseFirestore.instance.collection("notes").doc(noteId).update({
+            'tasks': FieldValue.arrayUnion(tasks),
+          }).then((value) {
+            // print(tasks);
+            // print(tasks);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              text: "Document Updated",
+              textColor: AppColors.textColor,
+              backgroundColor: Colors.green,
+            );
+          });
+        });
+      } else {
+        FirebaseFirestore.instance.collection('notes').doc(noteId).update({
+          'dueDate': dueDate,
+          'dueTime': timeInput.text,
+          'title': titleController.text,
+          'body': bodyController.text,
+          'attachments': attachments,
+          'tasks': [],
+          'collaborators': collaborators,
+        }).then((value) {
+          FirebaseFirestore.instance.collection("notes").doc(noteId).update({
+            'tasks': FieldValue.arrayUnion(tasks),
+          }).then((value) {
+            // print(tasks);
+            // print(tasks);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              text: "Document Updated",
+              textColor: AppColors.textColor,
+              backgroundColor: Colors.green,
+            );
+          });
+        });
+      }
+
+      if (addedCollaborators.isNotEmpty) {
+        DocumentReference requestDocReference =
+            await FirebaseFirestore.instance.collection('requests').add({
+          'noteID': widget.id,
+          'requestBy': user!.email,
+          'collaborators': addedCollaborators,
+        });
+
+        String newRequestId = requestDocReference.id;
+        await requestDocReference
+            .update({'requestId': newRequestId}).then((value) {
           showSnackBar(
             context: context,
-            text: "Document Updated",
+            text: "Collaborators Notified!",
             textColor: AppColors.textColor,
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.primaryColor,
           );
         });
-      });
+      }
     } on FirebaseException catch (error) {
       debugPrint(
         error.toString(),
@@ -182,6 +230,7 @@ class _ViewDocumentState extends State<ViewDocument> {
               backgroundColor: Colors.amber,
             );
           } else {
+            addedCollaborators.add(collaboratorId);
             Navigator.pop(context);
             Navigator.pop(context);
             showSnackBar(
@@ -514,7 +563,7 @@ class _ViewDocumentState extends State<ViewDocument> {
                                   String formattedDate =
                                       DateFormat('yyyy-MM-dd')
                                           .format(pickedDate);
-
+                                  dueDate = pickedDate;
                                   setState(() {
                                     dateInput.text = formattedDate;
                                   });

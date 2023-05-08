@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:notes_app/utils/app_text.dart';
 import 'package:notes_app/utils/colors.dart';
 import 'package:notes_app/utils/snachbar.dart';
@@ -156,7 +157,8 @@ class _StarredNotesState extends State<StarredNotes> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       subtitle: AppText(
-                        text: "${document['dueDate']} | ${document['dueTime']}",
+                        text:
+                            "${DateFormat('yyyy-MM-dd').format(document['dueDate'].toDate())} | ${document['dueTime']}",
                         color: AppColors.hintTextColor,
                         size: 15,
                       ),

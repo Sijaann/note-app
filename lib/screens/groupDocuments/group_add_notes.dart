@@ -28,10 +28,15 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController bodyController = TextEditingController();
   final TextEditingController taskController = TextEditingController();
+  final TextEditingController collaboratorEmailController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
   List<Map<String, bool>> tasks = [];
+  List collaborators = [];
 
   List<File> images = [];
+
+  DateTime? dueDate = DateTime.now();
 
   void selectImage() async {
     var res = await pickMultiImage();
@@ -83,23 +88,23 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
 
   void addDocument() async {
     try {
-      String? dueDate = dateInput.text;
+      DateTime? dueDatee = dueDate;
       String? dueTime = timeInput.text;
       String title = titleController.text;
       String? body = bodyController.text;
       List? attachments = base64Strings;
       List? task = tasks;
-      List collaborators = [user!.uid];
+      List collaboratorss = [user!.uid];
 
       DocumentReference newDocReference =
           await FirebaseFirestore.instance.collection('notes').add({
-        'dueDate': dueDate,
+        'dueDate': dueDatee,
         'dueTime': dueTime,
         'title': title,
         'body': body,
         'attachments': attachments,
         'tasks': task,
-        'collaborators': collaborators,
+        'collaborators': collaboratorss,
         'isImportant': false
       });
 
@@ -113,6 +118,24 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
           backgroundColor: Colors.green,
         );
       });
+
+      DocumentReference requestDocReference =
+          await FirebaseFirestore.instance.collection('requests').add({
+        'noteID': newDoumentId,
+        'requestBy': user!.email,
+        'collaborators': collaborators,
+      });
+
+      String newRequestId = requestDocReference.id;
+      await requestDocReference
+          .update({'requestId': newRequestId}).then((value) {
+        showSnackBar(
+          context: context,
+          text: "Collaborators Notified!",
+          textColor: AppColors.textColor,
+          backgroundColor: AppColors.primaryColor,
+        );
+      });
     } on FirebaseException catch (error) {
       showSnackBar(
         context: context,
@@ -123,8 +146,61 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
     }
   }
 
-  void addCollaborator() {
-    try {} on FirebaseAuthException catch (error) {
+  Future<void> addCollaborator({required String collaboratorEmail}) async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: collaboratorEmail)
+          .get();
+
+      if (querySnapshot.size > 0) {
+        DocumentSnapshot userDocument = querySnapshot.docs[0];
+        String collaboratorId = userDocument.id;
+
+        if (collaboratorId == user!.uid) {
+          Navigator.pop(context);
+          Navigator.pop(context);
+          showSnackBar(
+            context: context,
+            text: "Can not add yourself as collaborator!",
+            textColor: AppColors.textColor,
+            backgroundColor: Colors.red,
+          );
+        } else {
+          if (collaborators.contains(collaboratorId)) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              text: "The user is already a collaborator",
+              textColor: AppColors.textColor,
+              backgroundColor: Colors.amber,
+            );
+          } else {
+            collaborators.add(collaboratorId);
+            Navigator.pop(context);
+            Navigator.pop(context);
+            showSnackBar(
+              context: context,
+              text: "User found. Save Document to add collaborator",
+              textColor: AppColors.textColor,
+              backgroundColor: AppColors.primaryColor,
+            );
+          }
+        }
+
+        print(collaboratorId);
+      } else {
+        Navigator.pop(context);
+        Navigator.pop(context);
+        showSnackBar(
+          context: context,
+          text: "No user found with email $collaboratorEmail",
+          textColor: AppColors.textColor,
+          backgroundColor: Colors.red,
+        );
+      }
+    } on FirebaseException catch (error) {
       debugPrint(error.toString());
     }
   }
@@ -198,8 +274,59 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
                                   BorderRadiusDirectional.circular(10),
                             ),
                             onTap: () {
-                              // selectImage();
-                              // Navigator.pop(context);
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  title: const AppText(
+                                    text: "Add Collaborator",
+                                    color: AppColors.textColor,
+                                  ),
+                                  content: Form(
+                                    key: _formKey,
+                                    child: TextFormField(
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return "Field cannot be empty";
+                                        }
+                                      },
+                                      controller: collaboratorEmailController,
+                                      decoration: const InputDecoration(
+                                        hintText: "Email",
+                                        labelText: "Email",
+                                      ),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const AppText(
+                                        text: "Cancel",
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        if (_formKey.currentState!.validate()) {
+                                          addCollaborator(
+                                            collaboratorEmail:
+                                                collaboratorEmailController
+                                                    .text,
+                                          );
+                                          collaboratorEmailController.clear();
+                                          print(collaborators);
+                                        }
+                                      },
+                                      child: const AppText(
+                                        text: "Add",
+                                        color: AppColors.primaryColor,
+                                        weight: FontWeight.w500,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              );
                             },
                             leading: const Icon(
                               Icons.person_add,
@@ -382,6 +509,7 @@ class _GroupNotesAddState extends State<GroupNotesAdd> {
                                   firstDate: DateTime.now(),
                                   lastDate: DateTime(2025),
                                 );
+                                dueDate = pickedDate;
                                 if (pickedDate != null) {
                                   String formattedDate =
                                       DateFormat('yyyy-MM-dd')
