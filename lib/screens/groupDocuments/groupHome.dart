@@ -25,6 +25,46 @@ class _GroupHomeState extends State<GroupHome> {
   ];
   String filterTypeValue = "All";
 
+  // @override
+  // void initState() {
+  //   // TODO: implement initState
+  //   super.initState();
+  //   print(DateTime.now().add(const Duration(days: 366)));
+  //   print(DateTime.now());
+  //   print(DateTime.now().add(const Duration(days: 31)));
+  // }
+
+  Stream<QuerySnapshot> getNotesStream(String filterTypeValue, String userId) {
+    CollectionReference notesRef =
+        FirebaseFirestore.instance.collection('notes');
+    DateTime now = DateTime.now();
+
+    if (filterTypeValue == 'Weekly') {
+      return notesRef
+          .where('collaborators', arrayContains: userId)
+          .where('dueDate', isGreaterThan: Timestamp.fromDate(now))
+          .where('dueDate',
+              isLessThan: Timestamp.fromDate(now.add(Duration(days: 7))))
+          .snapshots();
+    } else if (filterTypeValue == 'Monthly') {
+      return notesRef
+          .where('collaborators', arrayContains: userId)
+          .where('dueDate', isGreaterThan: Timestamp.fromDate(now))
+          .where('dueDate',
+              isLessThan: Timestamp.fromDate(now.add(Duration(days: 31))))
+          .snapshots();
+    } else if (filterTypeValue == 'Yearly') {
+      return notesRef
+          .where('collaborators', arrayContains: userId)
+          .where('dueDate', isGreaterThan: Timestamp.fromDate(now))
+          .where('dueDate',
+              isLessThan: Timestamp.fromDate(now.add(Duration(days: 366))))
+          .snapshots();
+    } else {
+      return notesRef.where('collaborators', arrayContains: userId).snapshots();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,6 +101,7 @@ class _GroupHomeState extends State<GroupHome> {
             .collection('notes')
             .where('collaborators', arrayContains: user!.uid)
             .snapshots(),
+        // stream: getNotesStream(filterTypeValue, user!.uid),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return const Center(
@@ -241,6 +282,7 @@ class _GroupHomeState extends State<GroupHome> {
                                   child: AppText(
                                     text: item,
                                     color: AppColors.textColor,
+                                    size: 15,
                                   ),
                                 );
                               }).toList(),
@@ -253,14 +295,24 @@ class _GroupHomeState extends State<GroupHome> {
                           ),
                         ],
                       ),
-                      ListView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: notesTile.length,
-                        itemBuilder: (context, index) {
-                          return notesTile[index];
-                        },
-                      ),
+                      (filterTypeValue != "All")
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 50),
+                              child: Center(
+                                child: AppText(
+                                  text: "Feature comming soon",
+                                  color: AppColors.primaryColor,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: notesTile.length,
+                              itemBuilder: (context, index) {
+                                return notesTile[index];
+                              },
+                            ),
                     ],
                   ));
         },
